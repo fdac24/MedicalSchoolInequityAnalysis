@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCAT Mean by Race</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        #chartContainer {
+            width: 80%;
+            margin: auto;
+        }
+    </style>
+</head>
+<body>
+
+<h1>MCAT Mean by Race</h1>
+
+<!-- Dropdowns for selecting year and type -->
+<label for="yearSelect">Select Year:</label>
+<select id="yearSelect">
+    <option value="all">All Years</option>
+    <option value="2018">2018</option>
+    <option value="2019">2019</option>
+    <option value="2020">2020</option>
+    <option value="2021">2021</option>
+    <option value="2022">2022</option>
+    <option value="2023">2023</option>
+</select>
+
+<label for="typeSelect">Select Type:</label>
+<select id="typeSelect">
+    <option value="applicant">Applicants</option>
+    <option value="matriculant">Matriculants</option>
+    <option value="combined">Applicants vs Matriculants</option>
+</select>
+
+<div id="chartContainer">
+    <canvas id="mcatChart"></canvas>
+</div>
+
+<script>
+    const raceLabels = [
+        'American Indian or Alaska Native', 'Asian', 'Black or African American',
+        'Hispanic, Latino, or of Spanish Origin', 'Native Hawaiian or Other Pacific Islander', 
+        'White', 'Other', 'Multiple Race/Ethnicity', 'Unknown Race/Ethnicity', 
+        'Non-U.S. Citizen and Non-Permanent Resident'
+    ];
+
+    const data = {
+        '2018': {
+            'applicant': [498.6, 507.9, 497.1, 499.9, 502.8, 507.1, 504.3, 504.4, 507.5, 506.9],
+            'matriculant': [505.7, 513.4, 505.1, 506.0, 510.2, 511.9, 511.0, 510.1, 512.3, 513.1]
+        },
+        '2019': {
+            'applicant': [500.1, 508.4, 497.6, 500.2, 502.7, 507.5, 504.7, 504.7, 508.3, 507.1],
+            'matriculant': [504.8, 513.9, 505.7, 506.2, 508.7, 512.1, 510.8, 510.7, 513.2, 513.0]
+        },
+        '2020': {
+            'applicant': [499.9, 508.6, 498.3, 501.1, 500.7, 507.7, 505.3, 505.2, 508.5, 507.6],
+            'matriculant': [503.8, 513.8, 505.7, 506.6, 507.3, 512.2, 511.5, 510.7, 512.9, 513.0]
+        },
+        '2021': {
+            'applicant': [498.0, 508.6, 497.6, 500.2, 500.4, 507.5, 505.0, 504.6, 508.2, 507.1],
+            'matriculant': [503.8, 514.5, 505.9, 506.6, 507.3, 512.7, 511.7, 511.0, 513.9, 512.6]
+        },
+        '2022': {
+            'applicant': [498.7, 509.2, 497.4, 500.1, 502.0, 507.9, 505.4, 505.4, 508.5, 507.6],
+            'matriculant': [504.9, 514.4, 505.7, 506.1, 508.9, 512.6, 511.7, 511.2, 513.4, 512.8]
+        },
+        '2023': {
+            'applicant': [496.3, 509.1, 497.5, 500.1, 501.1, 507.8, 505.1, 504.9, 508.2, 507.6],
+            'matriculant': [502.2, 514.3, 505.7, 506.4, 507.3, 512.4, 511.9, 510.6, 513.6, 512.7]
+        }
+    };
+
+    const ctx = document.getElementById('mcatChart').getContext('2d');
+    let mcatChart;
+
+    function updateChart(year, type) {
+        // Clear existing chart
+        if (mcatChart) {
+            mcatChart.destroy();
+        }
+
+        const chartData = {
+            labels: raceLabels,
+            datasets: []
+        };
+
+        if (type === 'combined' && year !== 'all') {
+            chartData.datasets.push({
+                label: 'Applicants',
+                data: data[year]['applicant'],
+                backgroundColor: 'rgba(153, 102, 255, 0.6)'
+            });
+            chartData.datasets.push({
+                label: 'Matriculants',
+                data: data[year]['matriculant'],
+                backgroundColor: 'rgba(75, 192, 192, 0.6)'
+            });
+            chartData.datasets[1].stack = 'stacked';
+        } else if (year === 'all') {
+            // Add line datasets for each year if 'all' is selected
+            for (let yr in data) {
+                chartData.datasets.push({
+                    label: `${type.charAt(0).toUpperCase() + type.slice(1)} ${yr}`,
+                    data: data[yr][type],
+                    backgroundColor: `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, 150, 0.6)`,
+                    borderColor: `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, 150, 1)`,
+                    fill: false,
+                    type: 'line'
+                });
+            }
+        } else {
+            // Show data for selected year and type (applicant or matriculant)
+            chartData.datasets.push({
+                label: `${type.charAt(0).toUpperCase() + type.slice(1)} ${year}`,
+                data: data[year][type],
+                backgroundColor: type === 'applicant' ? 'rgba(75, 192, 192, 0.6)' : 'rgba(153, 102, 255, 0.6)'
+            });
+        }
+
+        // Create the chart
+        mcatChart = new Chart(ctx, {
+            type: 'bar',
+            data: chartData,
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        min: 472,
+                        max: 528
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    }
+                }
+            }
+        });
+    }
+
+    // Event listeners for dropdowns
+    document.getElementById('yearSelect').addEventListener('change', function () {
+        updateChart(this.value, document.getElementById('typeSelect').value);
+    });
+    document.getElementById('typeSelect').addEventListener('change', function () {
+        updateChart(document.getElementById('yearSelect').value, this.value);
+    });
+
+    // Initial chart load
+    updateChart('2018', 'applicant');
+</script>
+
+</body>
+</html>
+
